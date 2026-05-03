@@ -8,6 +8,25 @@ const PORT = 3000;
 app.use(cors());
 app.use(express.json());
 
+// ─── SETTINGS ─────────────────────────────────────────────────────────────────
+
+app.get('/api/settings', (req, res) => {
+  const settings = db.prepare('SELECT store_name, owner_name FROM settings WHERE id = 1').get();
+  res.json(settings);
+});
+
+app.put('/api/settings', (req, res) => {
+  const { store_name, owner_name } = req.body;
+  if (!store_name?.trim()) return res.status(400).json({ error: 'Store name is required' });
+  if (!owner_name?.trim()) return res.status(400).json({ error: 'Owner name is required' });
+
+  db.prepare(
+    'UPDATE settings SET store_name = ?, owner_name = ? WHERE id = 1'
+  ).run(store_name.trim(), owner_name.trim());
+
+  res.json({ store_name: store_name.trim(), owner_name: owner_name.trim() });
+});
+
 // ─── CATEGORIES ───────────────────────────────────────────────────────────────
 
 app.get('/api/categories', (req, res) => {
@@ -200,11 +219,15 @@ app.post('/api/sales', (req, res) => {
 
 app.get('/api/dashboard', (req, res) => {
   const todayStats = db.prepare(`
-    SELECT
-      COUNT(*) as sales_count,
-      COALESCE(SUM(total), 0) as revenue
+    SELECT COUNT(*) as sales_count, COALESCE(SUM(total), 0) as revenue
     FROM sales
     WHERE DATE(created_at, 'localtime') = DATE('now', 'localtime')
+  `).get();
+
+  const yesterdayStats = db.prepare(`
+    SELECT COUNT(*) as sales_count, COALESCE(SUM(total), 0) as revenue
+    FROM sales
+    WHERE DATE(created_at, 'localtime') = DATE('now', 'localtime', '-1 day')
   `).get();
 
   const { count: total_products } = db.prepare('SELECT COUNT(*) as count FROM products').get();
@@ -212,13 +235,15 @@ app.get('/api/dashboard', (req, res) => {
     'SELECT COUNT(*) as count FROM products WHERE quantity <= 10'
   ).get();
 
-  const recent_sales = db.prepare(`
+  // Today's transactions only — matches the "Today's Sales" section heading
+  const today_sales_list = db.prepare(`
     SELECT s.id, s.total, s.created_at, COUNT(si.id) as item_count
     FROM sales s
     LEFT JOIN sale_items si ON s.id = si.sale_id
+    WHERE DATE(s.created_at, 'localtime') = DATE('now', 'localtime')
     GROUP BY s.id
     ORDER BY s.created_at DESC
-    LIMIT 5
+    LIMIT 10
   `).all();
 
   const low_stock_products = db.prepare(`
@@ -233,9 +258,11 @@ app.get('/api/dashboard', (req, res) => {
   res.json({
     today_sales: todayStats.sales_count,
     today_revenue: todayStats.revenue,
+    yesterday_sales: yesterdayStats.sales_count,
+    yesterday_revenue: yesterdayStats.revenue,
     total_products,
     low_stock_count,
-    recent_sales,
+    today_sales_list,
     low_stock_products,
   });
 });
@@ -292,7 +319,22 @@ app.get('/api/analytics', (req, res) => {
     FROM sales
   `).get();
 
-  res.json({ daily_revenue, top_products, category_revenue, peak_hours, totals });
+  // Week-over-week: current week (Mon–today) vs previous full week (Mon–Sun)
+  const this_week = db.prepare(`
+    SELECT COUNT(*) as sales_count, COALESCE(SUM(total), 0) as revenue
+    FROM sales
+    WHERE DATE(created_at, 'localtime') >= DATE('now', 'localtime', 'weekday 1', '-7 days')
+      AND DATE(created_at, 'localtime') <= DATE('now', 'localtime')
+  `).get();
+
+  const last_week = db.prepare(`
+    SELECT COUNT(*) as sales_count, COALESCE(SUM(total), 0) as revenue
+    FROM sales
+    WHERE DATE(created_at, 'localtime') >= DATE('now', 'localtime', 'weekday 1', '-14 days')
+      AND DATE(created_at, 'localtime') < DATE('now', 'localtime', 'weekday 1', '-7 days')
+  `).get();
+
+  res.json({ daily_revenue, top_products, category_revenue, peak_hours, totals, this_week, last_week });
 });
 
 app.listen(PORT, () => {

@@ -16,3 +16,6 @@ export const createSale = (data) => api.post('/sales', data).then(r => r.data)
 
 export const getDashboard = () => api.get('/dashboard').then(r => r.data)
 export const getAnalytics = () => api.get('/analytics').then(r => r.data)
+
+export const getSettings = () => api.get('/settings').then(r => r.data)
+export const updateSettings = (data) => api.put('/settings', data).then(r => r.data)

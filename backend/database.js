@@ -12,6 +12,13 @@ db.pragma('journal_mode = WAL');
 db.pragma('foreign_keys = ON');
 
 db.exec(`
+  CREATE TABLE IF NOT EXISTS settings (
+    id INTEGER PRIMARY KEY CHECK(id = 1),
+    store_name TEXT NOT NULL DEFAULT 'Tindahan ni Aling Nena',
+    owner_name TEXT NOT NULL DEFAULT 'Aling Nena'
+  );
+  INSERT OR IGNORE INTO settings (id, store_name, owner_name) VALUES (1, 'Tindahan ni Aling Nena', 'Aling Nena');
+
   CREATE TABLE IF NOT EXISTS categories (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL UNIQUE,

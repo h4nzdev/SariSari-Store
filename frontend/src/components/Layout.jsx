@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react'
 import { Outlet, NavLink } from 'react-router-dom'
-import { LayoutDashboard, Package, ShoppingCart, ClipboardList, Store } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingCart, ClipboardList, Store, Settings } from 'lucide-react'
+import { getSettings } from '../api'
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -9,6 +11,12 @@ const navItems = [
 ]
 
 export default function Layout() {
+  const [storeInfo, setStoreInfo] = useState({ store_name: 'Tindahan ni Aling Nena', owner_name: 'Aling Nena' })
+
+  useEffect(() => {
+    getSettings().then(setStoreInfo).catch(() => {})
+  }, [])
+
   return (
     <div className="flex h-screen bg-orange-50">
       {/* Sidebar */}
@@ -18,9 +26,9 @@ export default function Layout() {
             <div className="bg-white/20 p-2 rounded-xl">
               <Store className="w-6 h-6 text-white" />
             </div>
-            <div>
-              <p className="text-white/80 text-xs font-medium">Tindahan ni</p>
-              <h1 className="text-white font-bold text-xl leading-tight">Aling Nena</h1>
+            <div className="min-w-0">
+              <p className="text-white/80 text-xs font-medium truncate">{storeInfo.owner_name}</p>
+              <h1 className="text-white font-bold text-lg leading-tight truncate">{storeInfo.store_name}</h1>
             </div>
           </div>
         </div>
@@ -45,8 +53,20 @@ export default function Layout() {
           ))}
         </nav>
 
-        <div className="p-4 text-center text-xs text-gray-400 border-t border-gray-100">
-          Sari-Sari Store Manager
+        <div className="p-4 border-t border-gray-100">
+          <NavLink
+            to="/settings"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
+                isActive
+                  ? 'bg-orange-500 text-white shadow-md shadow-orange-200'
+                  : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600'
+              }`
+            }
+          >
+            <Settings className="w-5 h-5" />
+            Settings
+          </NavLink>
         </div>
       </aside>
 

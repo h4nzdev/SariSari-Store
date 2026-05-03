@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard'
 import Products from './pages/Products'
 import NewSale from './pages/NewSale'
 import SalesHistory from './pages/SalesHistory'
+import Settings from './pages/Settings'
 
 export default function App() {
   return (
@@ -14,6 +15,7 @@ export default function App() {
           <Route path="products" element={<Products />} />
           <Route path="new-sale" element={<NewSale />} />
           <Route path="sales" element={<SalesHistory />} />
+          <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
     </BrowserRouter>

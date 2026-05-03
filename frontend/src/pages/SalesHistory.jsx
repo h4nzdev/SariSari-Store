@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getSales, getSale } from '../api'
+import { parseTS, peso } from '../utils'
 import { Search, X, Receipt } from 'lucide-react'
 
 // ─── Sale Detail Modal ────────────────────────────────────────────────────────
@@ -19,7 +20,7 @@ function SaleDetailModal({ saleId, onClose }) {
             <h3 className="font-bold text-lg text-gray-800">Sale #{saleId}</h3>
             {sale && (
               <p className="text-xs text-gray-400 mt-0.5">
-                {new Date(sale.created_at).toLocaleString('en-PH', {
+                {parseTS(sale.created_at)?.toLocaleString('en-PH', {
                   year: 'numeric',
                   month: 'long',
                   day: 'numeric',
@@ -94,7 +95,7 @@ export default function SalesHistory() {
     (s) =>
       `#${s.id}`.includes(search) ||
       s.total.toFixed(2).includes(search) ||
-      new Date(s.created_at).toLocaleDateString('en-PH').includes(search)
+      parseTS(s.created_at)?.toLocaleDateString('en-PH').includes(search)
   )
 
   const totalRevenue = sales.reduce((sum, s) => sum + s.total, 0)
@@ -123,11 +124,11 @@ export default function SalesHistory() {
         </div>
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-orange-100">
           <p className="text-sm text-gray-500">Total Revenue</p>
-          <p className="text-2xl font-bold text-orange-600 mt-1">₱{totalRevenue.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-orange-600 mt-1">{peso(totalRevenue)}</p>
         </div>
         <div className="bg-white rounded-2xl p-5 shadow-sm border border-orange-100">
           <p className="text-sm text-gray-500">Average Sale</p>
-          <p className="text-2xl font-bold text-gray-800 mt-1">₱{avgSale.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-gray-800 mt-1">{peso(avgSale)}</p>
         </div>
       </div>
 
@@ -172,7 +173,7 @@ export default function SalesHistory() {
                 <tr key={sale.id} className="hover:bg-orange-50/50 transition-colors">
                   <td className="px-6 py-4 text-sm font-medium text-orange-600">#{sale.id}</td>
                   <td className="px-6 py-4 text-sm text-gray-600">
-                    {new Date(sale.created_at).toLocaleString('en-PH', {
+                    {parseTS(sale.created_at)?.toLocaleString('en-PH', {
                       year: 'numeric',
                       month: 'short',
                       day: 'numeric',
@@ -187,7 +188,7 @@ export default function SalesHistory() {
                     <span className="truncate block">{sale.note || '—'}</span>
                   </td>
                   <td className="px-6 py-4 text-sm font-bold text-gray-800 text-right">
-                    ₱{sale.total.toFixed(2)}
+                    {peso(sale.total)}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <button
