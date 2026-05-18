@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\hanzc\\\\Documents\\\\baby_websites\\\\SariSari-Store\" -Recurse -Force -Exclude \".git\" | Where-Object { -not \\($_.FullName -match \"\\\\.git\"\\) } | Select-Object -ExpandProperty FullName | Sort-Object)",
+      "Bash(npm run *)"
+    ]
+  }
+}
