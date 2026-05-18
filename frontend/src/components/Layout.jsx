@@ -15,6 +15,10 @@ export default function Layout() {
 
   useEffect(() => {
     getSettings().then(setStoreInfo).catch(() => {})
+
+    const onUpdate = (e) => setStoreInfo(e.detail)
+    window.addEventListener('sari-settings-updated', onUpdate)
+    return () => window.removeEventListener('sari-settings-updated', onUpdate)
   }, [])
 
   return (

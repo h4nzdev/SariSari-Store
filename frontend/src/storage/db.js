@@ -241,6 +241,7 @@ export function updateSettings({ store_name, owner_name }) {
   if (!owner_name?.trim()) return Promise.reject(apiError('Owner name is required'));
   const settings = { store_name: store_name.trim(), owner_name: owner_name.trim() };
   write(K.settings, settings);
+  window.dispatchEvent(new CustomEvent('sari-settings-updated', { detail: settings }));
   return Promise.resolve(settings);
 }
 

@@ -109,7 +109,7 @@ export default function Settings() {
         </button>
 
         <p className="text-xs text-gray-400 text-center">
-          Changes appear in the sidebar after navigating away and back.
+          Changes appear in the sidebar immediately after saving.
         </p>
       </form>
     </div>
