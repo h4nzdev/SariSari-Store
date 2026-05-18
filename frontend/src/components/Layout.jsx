@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Outlet, NavLink } from 'react-router-dom'
-import { LayoutDashboard, Package, ShoppingCart, ClipboardList, Store, Settings } from 'lucide-react'
+import { LayoutDashboard, Package, ShoppingCart, ClipboardList, Store, Settings, HandCoins } from 'lucide-react'
 import { getSettings } from '../api'
 
 const navItems = [
@@ -8,6 +8,7 @@ const navItems = [
   { to: '/products', label: 'Products', icon: Package },
   { to: '/new-sale', label: 'New Sale', icon: ShoppingCart },
   { to: '/sales', label: 'Sales History', icon: ClipboardList },
+  { to: '/utang', label: 'Utang Tracker', icon: HandCoins },
 ]
 
 export default function Layout() {

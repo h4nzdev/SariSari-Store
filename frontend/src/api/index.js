@@ -12,4 +12,11 @@ export {
   getAnalytics,
   getSettings,
   updateSettings,
+  getPinnedIds,
+  togglePin,
+  addStock,
+  getUtang,
+  createUtangCustomer,
+  addUtangEntry,
+  deleteUtangCustomer,
 } from '../storage/db.js'

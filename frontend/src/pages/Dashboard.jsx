@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getDashboard, getAnalytics } from "../api";
+import { getDashboard, getAnalytics, addStock } from "../api";
 import { parseTS, peso, pct } from "../utils";
 import {
   TrendingUp,
@@ -9,6 +9,8 @@ import {
   AlertTriangle,
   BarChart2,
   LayoutDashboard,
+  Plus,
+  X,
 } from "lucide-react";
 import {
   ComposedChart,
@@ -100,7 +102,79 @@ function StatCard({ icon: Icon, label, value, color, bgColor, sub, delta }) {
   );
 }
 
-function Overview({ data }) {
+function RestockRow({ product, onRestocked }) {
+  const [inputOpen, setInputOpen] = useState(false);
+  const [qty, setQty] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const handleAdd = async () => {
+    const n = parseInt(qty, 10);
+    if (!n || n <= 0) return;
+    setSaving(true);
+    try {
+      await addStock(product.id, n);
+      setInputOpen(false);
+      setQty("");
+      onRestocked();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="flex items-center justify-between px-6 py-3">
+      <div className="flex-1 min-w-0 mr-3">
+        <p className="text-sm font-medium text-gray-800 truncate">{product.name}</p>
+        <p className="text-xs text-gray-400">{product.category_name}</p>
+      </div>
+
+      {inputOpen ? (
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <input
+            type="number"
+            min="1"
+            value={qty}
+            onChange={(e) => setQty(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+            placeholder="qty"
+            autoFocus
+            className="w-16 border border-orange-300 rounded-lg px-2 py-1 text-xs text-center focus:outline-none focus:ring-2 focus:ring-orange-400"
+          />
+          <button
+            onClick={handleAdd}
+            disabled={saving}
+            className="text-xs bg-orange-500 hover:bg-orange-600 text-white font-semibold px-2.5 py-1 rounded-lg transition-colors disabled:opacity-60"
+          >
+            {saving ? "…" : "Add"}
+          </button>
+          <button
+            onClick={() => { setInputOpen(false); setQty(""); }}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      ) : (
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span className={`text-sm font-bold px-3 py-1 rounded-full ${
+            product.quantity === 0 ? "bg-red-100 text-red-600" : "bg-amber-100 text-amber-600"
+          }`}>
+            {product.quantity === 0 ? "Out of stock" : `${product.quantity} left`}
+          </span>
+          <button
+            onClick={() => setInputOpen(true)}
+            className="p-1.5 bg-orange-100 hover:bg-orange-200 text-orange-600 rounded-lg transition-colors"
+            title="Quick restock"
+          >
+            <Plus className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Overview({ data, onRefresh }) {
   // Safety checks with default values
   const todaySales = data?.today_sales ?? 0;
   const yesterdaySales = data?.yesterday_sales ?? 0;
@@ -215,26 +289,7 @@ function Overview({ data }) {
           ) : (
             <div className="divide-y divide-gray-50">
               {lowStockProducts.map((p) => (
-                <div
-                  key={p.id}
-                  className="flex items-center justify-between px-6 py-3"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-gray-800">
-                      {p.name}
-                    </p>
-                    <p className="text-xs text-gray-400">{p.category_name}</p>
-                  </div>
-                  <span
-                    className={`text-sm font-bold px-3 py-1 rounded-full ${
-                      p.quantity === 0
-                        ? "bg-red-100 text-red-600"
-                        : "bg-amber-100 text-amber-600"
-                    }`}
-                  >
-                    {p.quantity === 0 ? "Out of stock" : `${p.quantity} left`}
-                  </span>
-                </div>
+                <RestockRow key={p.id} product={p} onRestocked={onRefresh} />
               ))}
             </div>
           )}
@@ -713,7 +768,27 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {tab === "overview" ? <Overview data={overview} /> : <Analytics />}
+      {tab === "overview" ? (
+        <Overview
+          data={overview}
+          onRefresh={() =>
+            getDashboard().then((res) =>
+              setOverview({
+                today_sales: res?.today_sales ?? 0,
+                yesterday_sales: res?.yesterday_sales ?? 0,
+                today_revenue: res?.today_revenue ?? 0,
+                yesterday_revenue: res?.yesterday_revenue ?? 0,
+                total_products: res?.total_products ?? 0,
+                low_stock_count: res?.low_stock_count ?? 0,
+                today_sales_list: res?.today_sales_list ?? [],
+                low_stock_products: res?.low_stock_products ?? [],
+              })
+            )
+          }
+        />
+      ) : (
+        <Analytics />
+      )}
     </div>
   );
 }

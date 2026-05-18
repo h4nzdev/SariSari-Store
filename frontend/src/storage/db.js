@@ -462,6 +462,76 @@ export function getDashboard() {
   });
 }
 
+// ─── PINNED PRODUCTS ─────────────────────────────────────────────────────────
+
+export function getPinnedIds() {
+  return new Set(read('sari_pinned') || []);
+}
+
+export function togglePin(productId) {
+  const pinned = getPinnedIds();
+  if (pinned.has(Number(productId))) pinned.delete(Number(productId));
+  else pinned.add(Number(productId));
+  write('sari_pinned', [...pinned]);
+  return pinned.has(Number(productId));
+}
+
+// ─── QUICK RESTOCK ───────────────────────────────────────────────────────────
+
+export function addStock(productId, addQty) {
+  const qty = Number(addQty);
+  if (!qty || qty <= 0) return Promise.reject(apiError('Quantity must be a positive number'));
+  const products = read(K.products) || [];
+  const idx = products.findIndex((p) => p.id === Number(productId));
+  if (idx === -1) return Promise.reject(apiError('Product not found'));
+  products[idx].quantity += qty;
+  products[idx].updated_at = ts();
+  write(K.products, products);
+  return Promise.resolve(products[idx]);
+}
+
+// ─── UTANG (CREDIT) TRACKER ──────────────────────────────────────────────────
+
+function computeBalance(entries) {
+  return entries.reduce((sum, e) => (e.type === 'debt' ? sum + e.amount : sum - e.amount), 0);
+}
+
+export function getUtang() {
+  const records = read('sari_utang') || [];
+  return Promise.resolve(records.map((r) => ({ ...r, balance: computeBalance(r.entries) })));
+}
+
+export function createUtangCustomer(customer_name) {
+  if (!customer_name?.trim()) return Promise.reject(apiError('Customer name is required'));
+  const records = read('sari_utang') || [];
+  if (records.some((r) => r.customer_name.toLowerCase() === customer_name.trim().toLowerCase())) {
+    return Promise.reject(apiError('Customer already exists'));
+  }
+  const record = { id: nextId('utang'), customer_name: customer_name.trim(), created_at: ts(), entries: [] };
+  records.push(record);
+  write('sari_utang', records);
+  return Promise.resolve({ ...record, balance: 0 });
+}
+
+export function addUtangEntry(customerId, { type, amount, note }) {
+  if (!['debt', 'payment'].includes(type)) return Promise.reject(apiError('Invalid entry type'));
+  const amt = Number(amount);
+  if (!amt || amt <= 0) return Promise.reject(apiError('Amount must be positive'));
+  const records = read('sari_utang') || [];
+  const idx = records.findIndex((r) => r.id === Number(customerId));
+  if (idx === -1) return Promise.reject(apiError('Customer not found'));
+  const entry = { id: nextId('utang_entry'), type, amount: amt, note: note?.trim() || '', created_at: ts() };
+  records[idx].entries.push(entry);
+  write('sari_utang', records);
+  return Promise.resolve({ ...records[idx], balance: computeBalance(records[idx].entries) });
+}
+
+export function deleteUtangCustomer(customerId) {
+  const records = read('sari_utang') || [];
+  write('sari_utang', records.filter((r) => r.id !== Number(customerId)));
+  return Promise.resolve({ message: 'Customer deleted' });
+}
+
 // ─── ANALYTICS ───────────────────────────────────────────────────────────────
 
 export function getAnalytics() {

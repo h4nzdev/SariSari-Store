@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard'
 import Products from './pages/Products'
 import NewSale from './pages/NewSale'
 import SalesHistory from './pages/SalesHistory'
+import Utang from './pages/Utang'
 import Settings from './pages/Settings'
 
 export default function App() {
@@ -15,6 +16,7 @@ export default function App() {
           <Route path="products" element={<Products />} />
           <Route path="new-sale" element={<NewSale />} />
           <Route path="sales" element={<SalesHistory />} />
+          <Route path="utang" element={<Utang />} />
           <Route path="settings" element={<Settings />} />
         </Route>
       </Routes>
